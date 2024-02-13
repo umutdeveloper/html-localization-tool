@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tailwind Starter Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="container mx-auto p-4">
+      <div class="flex flex-wrap -mx-3">
+        <!-- Left Column -->
+        <div class="w-full md:w-1/2 px-3 mb-6 md:mb-0 h-[600px]">
+          <label for="textarea" class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Paste HTML</label>
+          <textarea
+            id="textarea"
+            rows="10"
+            class="resize-y appearance-none block w-full h-1/2 bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></textarea>
+          <label for="textarea-2" class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Localized HTML</label>
+          <textarea
+            id="textarea-2"
+            rows="10"
+            class="resize-y appearance-none block w-full h-1/2 bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          ></textarea>
+        </div>
+
+        <!-- Right Column -->
+        <div class="w-full md:w-1/2 px-3 h-[635px] relative">
+          <label for="textarea" class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Preview</label>
+          <iframe id="iframe" class="w-full h-full border border-solid border-gray-400"></iframe>
+        </div>
+      </div>
+      <!-- Input Column -->
+      <div class="w-full mt-12 max-h-[600px] overflow-y-scroll" id="input-wrapper">
+        <!-- Label and Input Pair 1 -->
+
+        <!-- Add more labels and inputs as needed -->
+      </div>
+    </div>
+    <script>
+      let bodyTextNodes = [];
+      let clonedTextNodes = [];
+      function getTextNodes(node) {
+        const textNodes = [];
+
+        function getTextNodesRecursively(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            textNodes.push(node);
+          } else {
+            for (var i = 0; i < node.childNodes.length; i++) {
+              getTextNodesRecursively(node.childNodes[i]);
+            }
+          }
+        }
+
+        getTextNodesRecursively(node);
+
+        return textNodes;
+      }
+
+      function updateText(event, index) {
+        if (!event.target.value) {
+          bodyTextNodes[index].textContent = clonedTextNodes[index];
+        } else {
+          bodyTextNodes[index].textContent = event.target.value;
+        }
+        const textarea2 = document.getElementById("textarea-2");
+        const iframe = document.getElementById("iframe");
+        textarea2.value = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">\n' + iframe.contentDocument.body.parentElement.outerHTML;
+        localStorage.setItem("inputs", JSON.stringify(bodyTextNodes.map((node) => node.textContent)));
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        const textarea = document.getElementById("textarea");
+        const existingHtml = localStorage.getItem("html");
+        if (existingHtml) {
+          textarea.value = existingHtml;
+          const iframe = document.getElementById("iframe");
+          iframe.srcdoc = existingHtml;
+          iframe.onload = function () {
+            onIframeLoad(iframe);
+            const existingInputs = localStorage.getItem("inputs");
+            if (existingInputs) {
+                JSON.parse(existingInputs).forEach((input, index) => {
+                    bodyTextNodes[index].textContent = input;
+                    if (bodyTextNodes[index].textContent !== clonedTextNodes[index]) {
+                        document.getElementById('input' + index).value = input;
+                    }
+                })
+            }
+          };
+        }
+
+        textarea.addEventListener("input", function (event) {
+          const html = event.target.value;
+          localStorage.setItem("html", html);
+          const iframe = document.getElementById("iframe");
+          iframe.srcdoc = html;
+          iframe.onload = function () {
+            onIframeLoad(iframe);
+          };
+        });
+
+        function onIframeLoad(iframe) {
+          const iframeBody = iframe.contentDocument.body;
+          bodyTextNodes = getTextNodes(iframeBody).filter(
+            (node) => node.textContent.trim().length > 0 && node.parentNode.nodeName !== "SCRIPT"
+          );
+          clonedTextNodes = bodyTextNodes.map((node) => node.textContent);
+          const inputHtml = bodyTextNodes
+            .map((node, index) => {
+              return `
+                <div class="mb-4">
+                    <label for="input${index}" class="block tracking-wide text-gray-700 text-xs font-bold mb-2">${node.textContent}</label>
+                    <input
+                        type="text"
+                        id="input${index}"
+                        oninput="updateText(event, ${index})"
+                        class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                    />
+                </div>`;
+            })
+            .join("");
+          const inputWrapper = document.getElementById("input-wrapper");
+          inputWrapper.innerHTML = inputHtml;
+          // console.log(bodyTextNodes);
+        }
+      });
+    </script>
+  </body>
+</html>
