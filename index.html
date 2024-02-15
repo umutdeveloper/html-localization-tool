@@ -28,7 +28,8 @@
         <!-- Right Column -->
         <div class="w-full md:w-1/2 px-3 h-[635px] relative">
           <label for="textarea" class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">Preview</label>
-          <iframe id="iframe" class="w-full h-full border border-solid border-gray-400"></iframe>
+          <iframe id="iframe" class="w-full h-[610px] border border-solid border-gray-400"></iframe>
+          <input type="checkbox" id="scroll-to-index" name="scroll-to-index" class="mt-3" /> <label for="scroll-to-index">Scroll to index after focusing an input</label>
         </div>
       </div>
       <!-- Input Column -->
@@ -72,8 +73,11 @@
       }
 
       function focusNode(index) {
-        const node = bodyTextNodes[index];
-        node.parentNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const isFocusEnabled = document.getElementById('scroll-to-index').checked;
+        if (isFocusEnabled) {
+          const node = bodyTextNodes[index];
+          node.parentNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
       document.addEventListener("DOMContentLoaded", function () {
         const textarea = document.getElementById("textarea");
