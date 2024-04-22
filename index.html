@@ -33,15 +33,35 @@
         </div>
       </div>
       <!-- Input Column -->
-      <div class="w-full mt-12 max-h-[600px] overflow-y-scroll" id="input-wrapper">
+      <div class="w-full mt-12 max-h-[600px] overflow-y-scroll">
+        <div class="mb-4">
+          <label for="title" class="block tracking-wide text-gray-700 text-xs font-bold mb-2">Page Title</label>
+          <input
+              type="text"
+              id="title"
+              oninput="updateTitle(event)"
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          />
+        </div>
+        <div class="mb-4">
+          <label for="description" class="block tracking-wide text-gray-700 text-xs font-bold mb-2">Page Description</label>
+          <input
+              type="text"
+              id="description"
+              oninput="updateDescription(event)"
+              class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+          />
+        </div>
         <!-- Label and Input Pair 1 -->
-
+        <div id="input-wrapper"></div>
         <!-- Add more labels and inputs as needed -->
       </div>
     </div>
     <script>
       let bodyTextNodes = [];
       let clonedTextNodes = [];
+      let titleNode = undefined;
+      let descriptionNode = undefined;
       function getTextNodes(node) {
         const textNodes = [];
 
@@ -72,6 +92,30 @@
         localStorage.setItem("inputs", JSON.stringify(bodyTextNodes.map((node) => node.textContent)));
       }
 
+      function updateTitle(event) {
+        if (!event.target.value) {
+          titleNode.textContent = document.querySelector('label[for=title]').textContent;
+        } else {
+          titleNode.textContent = event.target.value;
+        }
+        const textarea2 = document.getElementById("textarea-2");
+        const iframe = document.getElementById("iframe");
+        textarea2.value = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">\n' + iframe.contentDocument.body.parentElement.outerHTML;
+        localStorage.setItem("title", titleNode.textContent);
+      }
+
+      function updateDescription(event) {
+        if (!event.target.value) {
+          descriptionNode.setAttribute('content', document.querySelector('label[for=description]').textContent);
+        } else {
+          descriptionNode.setAttribute('content', event.target.value);
+        }
+        const textarea2 = document.getElementById("textarea-2");
+        const iframe = document.getElementById("iframe");
+        textarea2.value = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">\n' + iframe.contentDocument.body.parentElement.outerHTML;
+        localStorage.setItem("description", descriptionNode.getAttribute('content'));
+      }
+
       function focusNode(index) {
         const isFocusEnabled = document.getElementById('scroll-to-index').checked;
         if (isFocusEnabled) {
@@ -97,6 +141,22 @@
                     }
                 })
             }
+            const existingTitle = localStorage.getItem('title');
+            if (existingTitle) {
+              titleNode.textContent = existingTitle;
+              if (titleNode.textContent !== document.querySelector('label[for=title]').textContent) {
+                document.getElementById('title').value = existingTitle;
+              }
+            }
+            const existingDescription = localStorage.getItem('description');
+            if (existingDescription) {
+              descriptionNode.setAttribute('content', existingDescription);
+              if (descriptionNode.getAttribute('content') !== document.querySelector('label[for=description]').value) {
+                document.getElementById('description').value = existingDescription;
+              }
+            }
+            const textarea2 = document.getElementById("textarea-2");
+            textarea2.value = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">\n' + iframe.contentDocument.body.parentElement.outerHTML;
           };
         }
 
@@ -116,6 +176,10 @@
             (node) => node.textContent.trim().length > 0 && node.parentNode.nodeName !== "SCRIPT"
           );
           clonedTextNodes = bodyTextNodes.map((node) => node.textContent);
+          titleNode = iframe.contentDocument.head.getElementsByTagName('title')[0];
+          document.querySelector('label[for=title]').innerHTML = titleNode.textContent;
+          descriptionNode = iframe.contentDocument.head.querySelector('meta[name=description]');
+          document.querySelector('label[for=description]').innerHTML = descriptionNode.getAttribute('content');
           const inputHtml = bodyTextNodes
             .map((node, index) => {
               return `
